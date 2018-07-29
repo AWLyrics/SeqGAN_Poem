@@ -15,21 +15,23 @@ EMB_DIM = 32  # embedding dimension
 HIDDEN_DIM = 32  # hidden state dimension of lstm cell
 SEQ_LENGTH = 20  # sequence length
 START_TOKEN = 0
-PRE_EPOCH_NUM = 10  # supervise (maximum likelihood estimation) epochs
+PRE_EPOCH_NUM = 120 # supervise (maximum likelihood estimation) epochs
 SEED = 88
-BATCH_SIZE = 128
-vocab_size = 6915 # max idx of word token = 6914
+BATCH_SIZE = 16
+# vocab_size = 6915 # max idx of word token = 6914
+vocab_size = 400 # max idx of lyric token = 211 + 0(for padding)
 
 dis_emb_size = 64
 
-TOTAL_BATCH = 200
-positive_file = './train.txt'
+TOTAL_BATCH = 150
+positive_file = './lyric.txt'
 negative_file = './generator_sample.txt'
 eval_file = './eval_file.txt'
-generated_num = 1000
+generated_num = 32
 sample_time = 16 # for G_beta to get reward
 num_class = 2 # 0 : fake data 1 : real data
 
+DIS_VS_GEN_TIME = 5
 def main():
     # set random seed (may important to the result)
     np.random.seed(SEED)
@@ -37,7 +39,6 @@ def main():
 
     # data loader
     gen_data_loader = Gen_Data_loader(BATCH_SIZE)
-    likelihood_data_loader = Gen_Data_loader(BATCH_SIZE)  # For testing
 
     dis_data_loader = Dis_dataloader(BATCH_SIZE)
 
@@ -61,14 +62,8 @@ def main():
     for epoch in range(PRE_EPOCH_NUM):
         loss = pre_train_epoch(sess, G, gen_data_loader)
         print("Epoch ", epoch, " loss: ", loss )
-        # if epoch % 5 == 0:
-        #     generate_samples(sess, G, BATCH_SIZE, generated_num, eval_file)
-        #     likelihood_data_loader.create_batches(eval_file)
-        #     test_loss = target_loss(sess, target_lstm, likelihood_data_loader)
-        #     print('pre-train epoch ', epoch, 'test_loss ', test_loss)
-        #     buffer = 'epoch:\t' + str(epoch) + '\tnll:\t' + str(test_loss) + '\n'
-        #     log.write(buffer)
-    print("Start pretraining the discriminator")
+
+    print("Start pre-train the discriminator")
     for _ in range(50):
         generate_samples(sess, G, BATCH_SIZE, generated_num, negative_file)
         dis_data_loader.load_train_data(positive_file, negative_file)
@@ -100,15 +95,16 @@ def main():
             # generate_samples(sess, G, BATCH_SIZE, generated_num, eval_file)
             # likelihood_data_loader.create_batches(eval_file)
             # test_loss = target_loss(sess, target_lstm, likelihood_data_loader)
-            buffer = 'epoch:\t' + str(total_batch) + '\treward:\t' + str(rewards) + '\n'
-            print('total_batch: ', total_batch, 'reward: ', rewards)
+            avg = np.mean(np.sum(rewards, axis=1), axis=0) / SEQ_LENGTH
+            buffer = 'epoch:\t' + str(total_batch) + '\treward:\t' + str(avg) + '\n'
+            print('total_batch: ', total_batch, 'average reward: ', avg)
             log.write(buffer)
 
         # update G_beta with weight decay
         g_beta.update_params()
 
         # train the discriminator
-        for it in range(10):
+        for it in range(DIS_VS_GEN_TIME):
             generate_samples(sess, G, BATCH_SIZE, generated_num, negative_file)
             dis_data_loader.load_train_data(positive_file, negative_file)
 
@@ -123,10 +119,11 @@ def main():
                     }
                     _ = sess.run(D.train_op, feed_dict=feed)
 # finnal generation
-    print("Wrting final results to test file")
+    print("Wrting final results to test_lyric file")
     test_file = "./final2.txt"
     generate_samples(sess, G, BATCH_SIZE, generated_num, test_file)
     print("Finished")
+    log.close()
 
 def generate_samples(sess, generator_model, batch_size, generated_num, output_file):
 

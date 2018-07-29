@@ -112,7 +112,7 @@ class Discriminator:
                 self.ypred_for_auc = tf.nn.softmax(self.scores)
                 self.predictions = tf.argmax(self.scores, 1, name="predictions")
             with tf.name_scope("loss"):
-                losses = tf.nn.softmax_cross_entropy_with_logits(logits=self.scores, labels=self.input_y)
+                losses = tf.nn.softmax_cross_entropy_with_logits_v2(logits=self.scores, labels=self.input_y)
                 self.loss = losses + l2_reg_lambda * l2_loss
 
         self.params = [param for param in tf.trainable_variables() if 'discriminator' in param.name]
