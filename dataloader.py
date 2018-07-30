@@ -99,6 +99,7 @@ class Dis_dataloader():
                 line = line.strip()
                 line = line.split()
                 parse_line = [int(x) for x in line]
+                # print(parse_line)
                 if len(parse_line) == 20:
                     negative_examples.append(parse_line)
         self.sentences = np.array(positive_examples + negative_examples)
@@ -106,6 +107,8 @@ class Dis_dataloader():
         # Generate labels
         positive_labels = [[0, 1] for _ in positive_examples]
         negative_labels = [[1, 0] for _ in negative_examples]
+        # print(positive_labels)
+        # print(len(negative_labels))
         self.labels = np.concatenate([positive_labels, negative_labels], 0)
 
         # Shuffle the data

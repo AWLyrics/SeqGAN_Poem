@@ -5,43 +5,55 @@ import random
 import numpy as np
 import tensorflow as tf
 from myG_beta import G_beta
-
+from bleu_calc import calc_bleu
 dis_filter_sizes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20]
 dis_num_filters = [100, 200, 200, 200, 200, 100, 100, 100, 100, 100, 160, 160]
 dis_dropout_keep_prob = 0.75
 
-EMB_DIM = 32  # embedding dimension
-HIDDEN_DIM = 32  # hidden state dimension of lstm cell
+EMB_DIM = 4 # embedding dimension
+HIDDEN_DIM = 4  # hidden state dimension of lstm cell
 SEQ_LENGTH = 20  # sequence length
 START_TOKEN = 0
-PRE_EPOCH_NUM = 10  # supervise (maximum likelihood estimation) epochs
+PRE_EPOCH_NUM = 1  # supervise (maximum likelihood estimation) epochs
 SEED = 88
-BATCH_SIZE = 256
+BATCH_SIZE = 512
 # vocab_size = 6915 # max idx of word token = 6914
 vocab_size = 20001  # max idx of lyric token = 211 + 0(for padding)
 
-dis_emb_size = 64
+dis_emb_size = 4
 
-TOTAL_BATCH = 15
+TOTAL_BATCH = 1
 positive_file = './lyric.txt'
 negative_file = './generator_sample.txt'
 eval_file = './eval_file.txt'
-generated_num = 32
+generated_num = 4096
 sample_time = 16  # for G_beta to get reward
 num_class = 2  # 0 : fake data 1 : real data
 
-DIS_VS_GEN_TIME = 5
+DIS_VS_GEN_TIME = 1
 
-x_file = "./x_lyric.txt"
-y_file = "./y_lyric.txt"
+x_file = "./data/train_idx_x.txt"
+y_file = "./data/train_idx_y.txt"
 
+dev_x = "./data/dev_idx_x.txt"
+dev_y = "./data/dev_idx_y.txt"
+
+test_x = "./data/test_idx_x.txt"
+test_y = "./data/test_idx_y.txt"
+
+dev_file = "./result/dev_ret.txt"
+test_file = "./result/test_ret.txt"
+
+
+dev_num = 1000
+test_num = 1000
 def main():
     # set random seed (may important to the result)
     np.random.seed(SEED)
     random.seed(SEED)
 
     # data loader
-    gen_data_loader = Gen_Data_loader(BATCH_SIZE)
+    # gen_data_loader = Gen_Data_loader(BATCH_SIZE)
     input_data_loader = Input_Data_loader(BATCH_SIZE)
     dis_data_loader = Dis_dataloader(BATCH_SIZE)
 
@@ -68,10 +80,11 @@ def main():
         print("Epoch ", epoch, " loss: ", loss)
 
     print("Start pre-train the discriminator")
-    for _ in range(50):
+    for _ in range(1):
         # generate_samples(sess, G, BATCH_SIZE, generated_num, negative_file)
         generate_samples_v2(sess, G, BATCH_SIZE, generated_num, negative_file, input_data_loader)
-        dis_data_loader.load_train_data(positive_file, negative_file)
+        # dis_data_loader.load_train_data(positive_file, negative_file)
+        dis_data_loader.load_train_data(y_file, negative_file)
         for _ in range(3):
             dis_data_loader.reset_pointer()
             for it in range(dis_data_loader.num_batch):
@@ -113,7 +126,13 @@ def main():
             buffer = 'epoch:\t' + str(total_batch) + '\treward:\t' + str(avg) + '\n'
             print('total_batch: ', total_batch, 'average reward: ', avg)
             log.write(buffer)
-
+            print("generating dev sentences")
+            dev_loader = Input_Data_loader(BATCH_SIZE)
+            dev_loader.create_batches(dev_x, dev_y)
+            generate_samples_v2(sess, G, BATCH_SIZE, dev_num, dev_file, dev_loader)
+            bleu = calc_bleu(dev_y, dev_file)
+            print("dev bleu: ", bleu)
+            log.write("bleu: %.5f \n" % bleu)
         # update G_beta with weight decay
         g_beta.update_params()
 
@@ -121,7 +140,7 @@ def main():
         for it in range(DIS_VS_GEN_TIME):
             # generate_samples(sess, G, BATCH_SIZE, generated_num, negative_file)
             generate_samples_v2(sess, G, BATCH_SIZE, generated_num, negative_file, input_data_loader)
-            dis_data_loader.load_train_data(positive_file, negative_file)
+            dis_data_loader.load_train_data(y_file, negative_file)
 
             for _ in range(3):
                 dis_data_loader.reset_pointer()
@@ -137,11 +156,17 @@ def main():
     # print("Wrting final results to test_lyric file")
     # test_file = "./final2.txt"
     # generate_samples(sess, G, BATCH_SIZE, generated_num, test_file)
-    # print("Finished")
-    # log.close()
+    print("Finished")
+    log.close()
     # save model
-    saver = tf.train.Saver()
-    saver.save(sess, './seq-gan')
+
+    print("Training Finished, starting to generating test ")
+    test_loader = Input_Data_loader(batch_size=BATCH_SIZE)
+    test_loader.create_batches(test_x, test_y)
+
+    generate_samples_v2(sess, BATCH_SIZE, test_num, test_file, test_loader)
+    # saver = tf.train.Saver()
+    # saver.save(sess, './seq-gan')
 
 
 def generate_samples(sess, generator_model, batch_size, generated_num, output_file):
@@ -159,9 +184,11 @@ def generate_samples(sess, generator_model, batch_size, generated_num, output_fi
 def generate_samples_v2(sess, generator_model, batch_size, generated_num, output_file, data_loader):
     generated_samples = []
     data_loader.reset_pointer()
+
     for i in range(generated_num // batch_size):
         target, input = data_loader.next_batch()
         one_batch = generator_model.generate_v2(sess, input)
+        # print("batch:  ", one_batch)
         generated_samples.extend(one_batch)
     with open(output_file, 'w') as fout:
         for poem in generated_samples:
