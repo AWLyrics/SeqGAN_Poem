@@ -3,7 +3,6 @@ import numpy as np
 from tensorflow.python.ops import tensor_array_ops, control_flow_ops
 
 
-
 class G_beta:
     def __init__(self, lstm, update_rate):
         self.lstm = lstm

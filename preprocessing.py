@@ -54,3 +54,6 @@ print(type(counter.vocabulary_))
 f = open("dict.pkl","wb")
 pickle.dump(counter.vocabulary_,f)
 f.close()
+
+# dict : 'word': 12
+# np.save("w2i.npy", dict)

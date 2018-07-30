@@ -30,6 +30,54 @@ class Gen_Data_loader():
         self.pointer = 0
 
 
+class Input_Data_loader():
+    def __init__(self, batch_size):
+        self.batch_size = batch_size
+        self.token_stream = []
+
+    def create_batches(self, x_file, y_file):
+        self.token_stream = []
+        self.target_stream = []
+        with open(x_file, 'r') as f:
+            for line in f:
+                line = line.strip()
+                line = line.split()
+                parse_line = [int(x) for x in line]
+                # print(parse_line)
+                if len(parse_line) == 20:
+                    self.token_stream.append(parse_line)
+        # print(len(self.token_stream))
+        with open(y_file, 'r') as f:
+            for line in f:
+                line = line.strip()
+                line = line.split()
+                parse_line = [int(x) for x in line]
+                # print(parse_line)
+                if len(parse_line) == 20:
+                    self.target_stream.append(parse_line)
+
+        self.num_batch = int(len(self.token_stream) / self.batch_size)
+        # print(self.num_batch)
+        self.token_stream = self.token_stream[:self.num_batch * self.batch_size]
+        self.target_stream = self.target_stream[:self.num_batch * self.batch_size]
+        self.sequence_batch = np.split(np.array(self.token_stream), self.num_batch, 0)
+        self.target_batch = np.split(np.array(self.target_stream), self.num_batch, 0)
+        self.pointer = 0
+
+    def next_batch(self):
+        input = self.sequence_batch[self.pointer]
+        target = self.target_batch[self.pointer]
+        self.pointer = (self.pointer + 1) % self.num_batch
+        return input, target
+
+    def reset_pointer(self):
+        self.pointer = 0
+
+    def get_all(self):
+        return np.array(self.token_stream)
+
+
+
 class Dis_dataloader():
     def __init__(self, batch_size):
         self.batch_size = batch_size
@@ -82,4 +130,19 @@ class Dis_dataloader():
 
     def reset_pointer(self):
         self.pointer = 0
+
+#
+if __name__ == '__main__':
+    loader = Input_Data_loader(8)
+    loader.create_batches("lyric.txt")
+
+    batch, y = loader.next_batch()
+    # print(batch)
+    # print(y)
+    # print(loader.get_all())
+    # print(len(loader.get_all()))
+
+    # print(loader.num_batch)
+
+
 

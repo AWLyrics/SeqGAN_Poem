@@ -1,0 +1,2 @@
+model_checkpoint_path: "seq-gan"
+all_model_checkpoint_paths: "seq-gan"

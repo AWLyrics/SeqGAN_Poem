@@ -114,7 +114,8 @@ class Discriminator:
             with tf.name_scope("loss"):
                 losses = tf.nn.softmax_cross_entropy_with_logits_v2(logits=self.scores, labels=self.input_y)
                 self.loss = losses + l2_reg_lambda * l2_loss
-
+            with tf.name_scope("accuracy"):
+                self.accuracy = tf.reduce_mean(tf.cast(tf.equal(self.predictions, tf.argmax(self.input_y, 1)), tf.float32))
         self.params = [param for param in tf.trainable_variables() if 'discriminator' in param.name]
         d_optimizer = tf.train.AdamOptimizer(1e-4)
         # aggregation_method =2 能够帮助减少内存占用
