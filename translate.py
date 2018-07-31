@@ -1,6 +1,6 @@
 import numpy as np
 
-word2idx = np.load("lyric_w2i.npy")
+word2idx = np.load("./data/w2i.npy")
 word2idx = word2idx.item()
 id2word = {k: v for v, k in zip(word2idx.keys(), word2idx.values())}
 
@@ -18,7 +18,7 @@ def translate(word_indexs):
     return "".join(words)
 
 
-with open("final2.txt", "r") as f:
+with open("./result/test_ret.txt", "r") as f:
     for l in f:
         l = l.split()
         line= [int(x) for x in l]

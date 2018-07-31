@@ -10,19 +10,19 @@ dis_filter_sizes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20]
 dis_num_filters = [100, 200, 200, 200, 200, 100, 100, 100, 100, 100, 160, 160]
 dis_dropout_keep_prob = 0.75
 
-EMB_DIM = 4 # embedding dimension
-HIDDEN_DIM = 4  # hidden state dimension of lstm cell
+EMB_DIM = 128 # embedding dimension
+HIDDEN_DIM = 64  # hidden state dimension of lstm cell
 SEQ_LENGTH = 20  # sequence length
 START_TOKEN = 0
-PRE_EPOCH_NUM = 1  # supervise (maximum likelihood estimation) epochs
+PRE_EPOCH_NUM = 80  # supervise (maximum likelihood estimation) epochs
 SEED = 88
 BATCH_SIZE = 512
 # vocab_size = 6915 # max idx of word token = 6914
 vocab_size = 20001  # max idx of lyric token = 211 + 0(for padding)
 
-dis_emb_size = 4
+dis_emb_size = 32
 
-TOTAL_BATCH = 1
+TOTAL_BATCH = 120
 positive_file = './lyric.txt'
 negative_file = './generator_sample.txt'
 eval_file = './eval_file.txt'
@@ -30,7 +30,7 @@ generated_num = 4096
 sample_time = 16  # for G_beta to get reward
 num_class = 2  # 0 : fake data 1 : real data
 
-DIS_VS_GEN_TIME = 1
+DIS_VS_GEN_TIME = 4
 
 x_file = "./data/train_idx_x.txt"
 y_file = "./data/train_idx_y.txt"
@@ -164,7 +164,7 @@ def main():
     test_loader = Input_Data_loader(batch_size=BATCH_SIZE)
     test_loader.create_batches(test_x, test_y)
 
-    generate_samples_v2(sess, BATCH_SIZE, test_num, test_file, test_loader)
+    generate_samples_v2(sess,G, BATCH_SIZE, test_num, test_file, test_loader)
     # saver = tf.train.Saver()
     # saver.save(sess, './seq-gan')
 
