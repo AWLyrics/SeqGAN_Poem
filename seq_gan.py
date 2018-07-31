@@ -8,13 +8,11 @@ from myG_beta import G_beta
 from bleu_calc import calc_bleu
 import time
 
-
-
 dis_filter_sizes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20]
 dis_num_filters = [100, 200, 200, 200, 200, 100, 100, 100, 100, 100, 160, 160]
 dis_dropout_keep_prob = 0.75
 
-EMB_DIM = 32 # embedding dimension
+EMB_DIM = 256  # embedding dimension
 HIDDEN_DIM = 64  # hidden state dimension of lstm cell
 SEQ_LENGTH = 20  # sequence length
 START_TOKEN = 0
@@ -46,12 +44,13 @@ dev_y = "./data/dev_idx_y.txt"
 test_x = "./data/test_idx_x.txt"
 test_y = "./data/test_idx_y.txt"
 
-dev_file = "./result/dev_ret.txt"
-test_file = "./result/test_ret.txt"
-
+dev_file = "./result/dev_ret"
+test_file = "./result/test_ret"
 
 dev_num = 1000
 test_num = 1000
+
+
 def main():
     # set random seed (may important to the result)
     np.random.seed(SEED)
@@ -85,7 +84,12 @@ def main():
         loss = pre_train_epoch_v2(sess, G, input_data_loader)
         print("Epoch ", epoch, " loss: ", loss)
         print("pre-train generator epoch time: ", time.time - s, " s")
-
+    dev_loader = Input_Data_loader(BATCH_SIZE)
+    dev_loader.create_batches(dev_x, dev_y)
+    generate_samples_v2(sess, G, BATCH_SIZE, dev_num, dev_file + "_no_adv" + ".txt", dev_loader)
+    bleu = calc_bleu(dev_y, dev_file)
+    print("pre-train bleu: ", bleu)
+    log.write("pre-train bleu: %f " % bleu)
     print("Start pre-train the discriminator")
     s = time.time()
     for _ in range(PRE_DIS_NUM):
@@ -104,7 +108,7 @@ def main():
                 }
                 _, acc = sess.run([D.train_op, D.accuracy], feed)
             # print(acc)
-    print("pretrain discriminator: ", time.time - s , " s")
+    print("pretrain discriminator: ", time.time - s, " s")
     g_beta = G_beta(G, update_rate=0.8)
 
     print('#########################################################################')
@@ -122,7 +126,7 @@ def main():
             # for i in range(input_data_loader.num_batch):
             input_x = input_data_loader.next_batch()[0]
             samples = G.generate_v2(sess, input_x)
-                # print(sample)
+            # print(sample)
             # print(samples)
             rewards = g_beta.get_reward(sess, samples, sample_time, D)
             feed = {G.x: samples, G.rewards: rewards, G.inputs: input_x}
@@ -137,11 +141,11 @@ def main():
             print('total_batch: ', total_batch, 'average reward: ', avg)
             log.write(buffer)
             print("generating dev sentences")
-            dev_loader = Input_Data_loader(BATCH_SIZE)
-            dev_loader.create_batches(dev_x, dev_y)
-            generate_samples_v2(sess, G, BATCH_SIZE, dev_num, dev_file, dev_loader)
+
+            generate_samples_v2(sess, G, BATCH_SIZE, dev_num, dev_file + "_" + str(total_batch) + ".txt", dev_loader)
             bleu = calc_bleu(dev_y, dev_file)
             print("dev bleu: ", bleu)
+
             log.write("bleu: %.5f \n" % bleu)
         # update G_beta with weight decay
         g_beta.update_params()
@@ -164,9 +168,6 @@ def main():
                     _ = sess.run(D.train_op, feed_dict=feed)
         print("Adversarial Epoch consumed: ", time.time() - s, " s")
     # finnal generation
-    # print("Wrting final results to test_lyric file")
-    # test_file = "./final2.txt"
-    # generate_samples(sess, G, BATCH_SIZE, generated_num, test_file)
     print("Finished")
     log.close()
     # save model
@@ -175,7 +176,7 @@ def main():
     test_loader = Input_Data_loader(batch_size=BATCH_SIZE)
     test_loader.create_batches(test_x, test_y)
 
-    generate_samples_v2(sess,G, BATCH_SIZE, test_num, test_file, test_loader)
+    generate_samples_v2(sess, G, BATCH_SIZE, test_num, test_file + "_final.txt", test_loader)
     # saver = tf.train.Saver()
     # saver.save(sess, './seq-gan')
 
@@ -205,6 +206,7 @@ def generate_samples_v2(sess, generator_model, batch_size, generated_num, output
         for poem in generated_samples:
             buffer = ' '.join([str(x) for x in poem]) + '\n'
             fout.write(buffer)
+
 
 # pre-train the Generator based on MLE method
 def pre_train_epoch(sess, trainable_model, data_loader):

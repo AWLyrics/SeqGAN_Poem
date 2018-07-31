@@ -44,11 +44,10 @@ if __name__ == '__main__':
         refer = translate_file(args.refer_file)
         input = translate_file(args.input_file)
         for t, r, i in zip(trans, refer, input):
-            if t != '变成液态':
-                print("input: ", i)
-                print("translate: ", t)
-                print("refer: ", r)
-                print()
+            print("input: ", i)
+            print("translate: ", t)
+            print("refer: ", r)
+            print()
     else:
         for i in translate_file(args.index_file):
             print(i)
