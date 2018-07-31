@@ -14,7 +14,7 @@ dis_filter_sizes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20]
 dis_num_filters = [100, 200, 200, 200, 200, 100, 100, 100, 100, 100, 160, 160]
 dis_dropout_keep_prob = 0.75
 
-EMB_DIM = 256 # embedding dimension
+EMB_DIM = 32 # embedding dimension
 HIDDEN_DIM = 64  # hidden state dimension of lstm cell
 SEQ_LENGTH = 20  # sequence length
 START_TOKEN = 0
@@ -79,12 +79,12 @@ def main():
     #  pre-train generator
     print('Start pre-training...')
     log.write('pre-training generator...\n')
-    s = time.time()
     for epoch in range(PRE_EPOCH_NUM):
+        s = time.time()
         # loss = pre_train_epoch(sess, G, gen_data_loader)
         loss = pre_train_epoch_v2(sess, G, input_data_loader)
         print("Epoch ", epoch, " loss: ", loss)
-    print("pre train generator: ", time.time - s , " s")
+        print("pre-train generator epoch time: ", time.time - s, " s")
 
     print("Start pre-train the discriminator")
     s = time.time()

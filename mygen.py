@@ -47,12 +47,20 @@ class Generator:
 
         # Initial states
         if has_input:
-            cell = tf.nn.rnn_cell.BasicLSTMCell(self.hidden_dim)
-            # print(self.processed_inputs) # seq_len x batch_size x embedding_dim
-            outputs, state = tf.nn.dynamic_rnn(cell, self.processed_inputs, dtype=tf.float32)
-            # print(outputs) # (20, 16, 32)
-            # print(state)
-            self.h0 = tf.stack([outputs[-1], outputs[-1]])  # (2, 20, 32)
+            # LSTM may be too slow, use fully connected layer instead
+            # cell = tf.nn.rnn_cell.BasicLSTMCell(self.hidden_dim)
+            # outputs, state = tf.nn.dynamic_rnn(cell, self.processed_inputs, dtype=tf.float32)
+            # self.h0 = tf.stack([outputs[-1], outputs[-1]])  # (2, 20, 32)
+            self.encoder_W = tf.Variable(tf.random_normal([self.emb_dim * self.sequence_length, self.hidden_dim]))
+            self.encoder_b = tf.Variable(tf.zeros(self.hidden_dim))
+            self.g_params.append(self.encoder_b)
+            self.g_params.append(self.encoder_W)
+            # [20,512,256] -> batch_size x  hidden_dim *2
+            flatten = tf.reshape(self.processed_inputs, [self.batch_size, -1])
+            densed = tf.nn.xw_plus_b(flatten, self.encoder_W, self.encoder_b) # batch
+            print(densed.shape)
+            self.h0 = tf.stack([densed, densed])
+            # densed = tf.layers.dense(self.processed_inputs, self.hidden_dim)
             # print(self.h0)
         else:
             self.h0 = tf.zeros([self.batch_size, self.hidden_dim])  #
