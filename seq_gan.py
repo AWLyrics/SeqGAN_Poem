@@ -16,8 +16,8 @@ EMB_DIM = 256  # embedding dimension
 HIDDEN_DIM = 64  # hidden state dimension of lstm cell
 SEQ_LENGTH = 20  # sequence length
 START_TOKEN = 0
-PRE_EPOCH_NUM = 100  # supervise (maximum likelihood estimation) epochs
-PRE_DIS_NUM = 50
+PRE_EPOCH_NUM = 5  # supervise (maximum likelihood estimation) epochs
+PRE_DIS_NUM = 10
 SEED = 88
 BATCH_SIZE = 512
 # vocab_size = 6915 # max idx of word token = 6914
@@ -33,7 +33,7 @@ generated_num = 4096
 sample_time = 16  # for G_beta to get reward
 num_class = 2  # 0 : fake data 1 : real data
 
-DIS_VS_GEN_TIME = 4
+DIS_VS_GEN_TIME = 1
 
 x_file = "./data/train_idx_x.txt"
 y_file = "./data/train_idx_y.txt"
@@ -83,11 +83,11 @@ def main():
         # loss = pre_train_epoch(sess, G, gen_data_loader)
         loss = pre_train_epoch_v2(sess, G, input_data_loader)
         print("Epoch ", epoch, " loss: ", loss)
-        print("pre-train generator epoch time: ", time.time - s, " s")
+        print("pre-train generator epoch time: ", time.time() - s, " s")
     dev_loader = Input_Data_loader(BATCH_SIZE)
     dev_loader.create_batches(dev_x, dev_y)
     generate_samples_v2(sess, G, BATCH_SIZE, dev_num, dev_file + "_no_adv" + ".txt", dev_loader)
-    bleu = calc_bleu(dev_y, dev_file)
+    bleu = calc_bleu(dev_y, dev_file+ "_no_adv.txt")
     print("pre-train bleu: ", bleu)
     log.write("pre-train bleu: %f " % bleu)
     print("Start pre-train the discriminator")
@@ -107,8 +107,8 @@ def main():
                     D.dropout_keep_prob: dis_dropout_keep_prob
                 }
                 _, acc = sess.run([D.train_op, D.accuracy], feed)
-            # print(acc)
-    print("pretrain discriminator: ", time.time - s, " s")
+            print(acc)
+    print("pretrain discriminator: ", time.time() - s, " s")
     g_beta = G_beta(G, update_rate=0.8)
 
     print('#########################################################################')
@@ -143,7 +143,7 @@ def main():
             print("generating dev sentences")
 
             generate_samples_v2(sess, G, BATCH_SIZE, dev_num, dev_file + "_" + str(total_batch) + ".txt", dev_loader)
-            bleu = calc_bleu(dev_y, dev_file)
+            bleu = calc_bleu(dev_y, dev_file + "_" + str(total_batch) + ".txt")
             print("dev bleu: ", bleu)
 
             log.write("bleu: %.5f \n" % bleu)

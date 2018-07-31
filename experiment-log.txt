@@ -1,1 +1,52 @@
 pre-training generator...
+pre-train bleu: 0.007646 adversarial training...
+epoch:	0	reward:	0.9520158767700195
+bleu: 0.00886 
+epoch:	5	reward:	0.9247384071350098
+bleu: 0.00775 
+epoch:	10	reward:	0.7263990879058838
+bleu: 0.00647 
+epoch:	15	reward:	0.5943860054016114
+bleu: 0.00575 
+epoch:	20	reward:	0.4995265960693359
+bleu: 0.00622 
+epoch:	25	reward:	0.45508708953857424
+bleu: 0.00581 
+epoch:	30	reward:	0.44716644287109375
+bleu: 0.00619 
+epoch:	35	reward:	0.3406859874725342
+bleu: 0.00693 
+epoch:	40	reward:	0.30925238132476807
+bleu: 0.00498 
+epoch:	45	reward:	0.3467717170715332
+bleu: 0.00541 
+epoch:	50	reward:	0.27167439460754395
+bleu: 0.00478 
+epoch:	55	reward:	0.23048312664031984
+bleu: 0.00410 
+epoch:	60	reward:	0.2496413230895996
+bleu: 0.00456 
+epoch:	65	reward:	0.1403515577316284
+bleu: 0.00173 
+epoch:	70	reward:	0.1183321475982666
+bleu: 0.00127 
+epoch:	75	reward:	0.14840792417526244
+bleu: 0.00328 
+epoch:	80	reward:	0.127197003364563
+bleu: 0.00223 
+epoch:	85	reward:	0.07369396686553956
+bleu: 0.00525 
+epoch:	90	reward:	0.07844616174697876
+bleu: 0.00427 
+epoch:	95	reward:	0.07482134103775025
+bleu: 0.00294 
+epoch:	100	reward:	0.06733392477035523
+bleu: 0.00387 
+epoch:	105	reward:	0.08422672748565674
+bleu: 0.00342 
+epoch:	110	reward:	0.08822208046913146
+bleu: 0.00413 
+epoch:	115	reward:	0.08208459615707397
+bleu: 0.00363 
+epoch:	119	reward:	0.11786257028579712
+bleu: 0.00644 
