@@ -6,15 +6,20 @@ import numpy as np
 import tensorflow as tf
 from myG_beta import G_beta
 from bleu_calc import calc_bleu
+import time
+
+
+
 dis_filter_sizes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20]
 dis_num_filters = [100, 200, 200, 200, 200, 100, 100, 100, 100, 100, 160, 160]
 dis_dropout_keep_prob = 0.75
 
-EMB_DIM = 128 # embedding dimension
+EMB_DIM = 256 # embedding dimension
 HIDDEN_DIM = 64  # hidden state dimension of lstm cell
 SEQ_LENGTH = 20  # sequence length
 START_TOKEN = 0
-PRE_EPOCH_NUM = 80  # supervise (maximum likelihood estimation) epochs
+PRE_EPOCH_NUM = 100  # supervise (maximum likelihood estimation) epochs
+PRE_DIS_NUM = 50
 SEED = 88
 BATCH_SIZE = 512
 # vocab_size = 6915 # max idx of word token = 6914
@@ -73,14 +78,17 @@ def main():
     log = open('./experiment-log.txt', 'w')
     #  pre-train generator
     print('Start pre-training...')
-    log.write('pre-training...\n')
+    log.write('pre-training generator...\n')
+    s = time.time()
     for epoch in range(PRE_EPOCH_NUM):
         # loss = pre_train_epoch(sess, G, gen_data_loader)
         loss = pre_train_epoch_v2(sess, G, input_data_loader)
         print("Epoch ", epoch, " loss: ", loss)
+    print("pre train generator: ", time.time - s , " s")
 
     print("Start pre-train the discriminator")
-    for _ in range(1):
+    s = time.time()
+    for _ in range(PRE_DIS_NUM):
         # generate_samples(sess, G, BATCH_SIZE, generated_num, negative_file)
         generate_samples_v2(sess, G, BATCH_SIZE, generated_num, negative_file, input_data_loader)
         # dis_data_loader.load_train_data(positive_file, negative_file)
@@ -96,14 +104,16 @@ def main():
                 }
                 _, acc = sess.run([D.train_op, D.accuracy], feed)
             # print(acc)
-
+    print("pretrain discriminator: ", time.time - s , " s")
     g_beta = G_beta(G, update_rate=0.8)
+
     print('#########################################################################')
     print('Start Adversarial Training...')
     log.write('adversarial training...\n')
 
     for total_batch in range(TOTAL_BATCH):
         # train generator once
+        s = time.time()
         for it in range(1):
             # samples = G.generate(sess)
             # print(input_data_loader.get_all().shape)
@@ -152,6 +162,7 @@ def main():
                         D.dropout_keep_prob: dis_dropout_keep_prob
                     }
                     _ = sess.run(D.train_op, feed_dict=feed)
+        print("Adversarial Epoch consumed: ", time.time() - s, " s")
     # finnal generation
     # print("Wrting final results to test_lyric file")
     # test_file = "./final2.txt"
